@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:auth": "node --experimental-strip-types scripts/test-basic-auth.mts"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",
