@@ -28,4 +28,4 @@ Two supported paths:
 ## Repo
 
 - Local: `/home/neteng/.openclaw/workspace/ThinkArena`
-- Remote: https://github.com/AlfredIngram/ThinkArena (private)
+- Remote: https://github.com/AlfredIngram/ThinkArena (public)
