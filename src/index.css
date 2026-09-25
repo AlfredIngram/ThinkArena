@@ -1,35 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: dark;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --arena-night: #0a0d24;
+  --arena-deep: #121037;
+  --arena-panel: #1a1745;
+  --arena-edge: #3b2f7a;
 }
 
 * {
-  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
-  min-height: 100vh;
-  background: #0b0d12;
-  color: #e8eaf0;
+  font-family: theme('fontFamily.body');
+  color: #eef1ff;
+  background: radial-gradient(1200px 700px at 12% -8%, #2a1f6b 0%, rgba(18, 16, 55, 0) 60%),
+    radial-gradient(1000px 600px at 92% 4%, #123a63 0%, rgba(18, 16, 55, 0) 55%),
+    radial-gradient(900px 700px at 50% 120%, #0f2c53 0%, rgba(10, 13, 36, 0) 60%),
+    linear-gradient(180deg, #0a0d24 0%, #0d1030 55%, #0a0d24 100%);
+  background-attachment: fixed;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
-.app {
-  min-height: 100vh;
-  display: grid;
-  place-content: center;
-  gap: 0.5rem;
-  text-align: center;
-  padding: 2rem;
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: theme('fontFamily.display');
+  letter-spacing: 0.01em;
 }
 
-.app h1 {
-  margin: 0;
-  font-size: clamp(2rem, 6vw, 3.5rem);
-  letter-spacing: -0.02em;
+/* --- Reusable game pieces --------------------------------------------- */
+
+@layer components {
+  .game-panel {
+    @apply rounded-game border border-white/10 bg-white/[0.045] backdrop-blur-md shadow-panel;
+  }
+
+  .game-card {
+    @apply game-panel relative overflow-hidden p-5 transition-transform duration-200;
+  }
+
+  .glow-ring {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 28px rgba(34, 211, 238, 0.25);
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-bold;
+  }
+
+  .game-input {
+    @apply min-h-[48px] w-full rounded-2xl border-2 border-white/15 bg-black/40 px-4 text-left text-white
+      placeholder:text-white/30 focus:border-electric-cyan focus:outline-none;
+  }
+
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-2xl px-6 font-display font-bold
+      text-lg shadow-lg transition-all duration-150 focus:outline-none focus-visible:ring-4
+      focus-visible:ring-electric-cyan/60 active:translate-y-[2px] disabled:cursor-not-allowed
+      disabled:opacity-50;
+    min-height: 52px;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-b from-electric-blue to-indigo-600 text-white
+      hover:from-blue-400 hover:to-indigo-500 hover:shadow-glow;
+  }
+
+  .btn-success {
+    @apply btn bg-gradient-to-b from-lime-400 to-emerald-600 text-emerald-950
+      hover:from-lime-300 hover:to-emerald-500 hover:shadow-[0_0_24px_rgba(163,230,53,0.45)];
+  }
+
+  .btn-gold {
+    @apply btn bg-gradient-to-b from-amber-300 to-orange-500 text-amber-950
+      hover:from-amber-200 hover:to-orange-400 hover:shadow-glowGold;
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/15 bg-white/5 text-white hover:bg-white/10;
+  }
+
+  .text-outline {
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .tile-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
 }
 
-.tagline {
-  margin: 0;
-  opacity: 0.7;
+/* Bigger, friendlier focus states for keyboard + accessibility */
+:focus-visible {
+  outline: 3px solid #22d3ee;
+  outline-offset: 2px;
+  border-radius: 14px;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.35);
+}
+
+/* Scrollbars that match the arena */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3b2f7a transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3b2f7a;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reduce-motion-off * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
