@@ -9,6 +9,26 @@ Web app, deployed on Netlify, protected by a username + password.
 - Site-wide HTTP Basic Auth via a Netlify Edge Function (`netlify/edge-functions/basic-auth.ts`)
 - Netlify Functions can be added under `netlify/functions/` if server-side work is needed
 
+## Features
+
+- **Weekly learning arena** — spelling, math, Bible-verse practice, weekly map
+- **Multi-timeframe goals** (`/goals`) — Weekly / Monthly / Yearly tabs with progress
+  bars and a GitHub-style activity heatmap. Month/year totals are *derived* from an
+  append-only daily timeline (`src/services/timeframeEngine.ts`), so they can't drift.
+- **Layered avatar wardrobe** (`/wardrobe`) — mix-and-match cosmetics across 7 slots
+  (base, skin, hair, outfit, accessory, pet, aura) with rarity tiers. Every item is
+  code-drawn SVG (`src/components/Avatar.tsx`); drop PNGs in `public/avatars/` and point
+  a wardrobe item's `image` field at them to swap in raster art.
+- **Parent mode** (`/parent`, PIN `1234` by default) — edit weekly + long-term goals,
+  reward multiplier.
+
+## Tests
+
+```bash
+npm run test:auth      # HTTP Basic Auth edge-function cases
+npm run test:engines   # XP / timeframe / wardrobe engine smoke tests
+```
+
 ## Access control (username + password)
 
 `netlify/edge-functions/basic-auth.ts` runs on every request (`/*`) and requires HTTP
