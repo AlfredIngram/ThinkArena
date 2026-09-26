@@ -18,6 +18,7 @@ import { Achievements } from './pages/Achievements'
 import { ParentDashboard } from './pages/ParentDashboard'
 import { NotFound } from './pages/NotFound'
 import { setStorageNamespace } from './services/storage'
+import type { StudentRow } from './services/remote'
 
 /** The routed game UI, shared by local mode and signed-in mode. */
 function AppRoutes() {
@@ -46,11 +47,18 @@ function AppRoutes() {
  * before <GameProvider> reads anything, and the `key` forces a clean remount
  * (fresh state) whenever the active student changes.
  */
-function GameShell({ studentId }: { studentId: string | null }) {
+function GameShell({ student }: { student: StudentRow | null }) {
   // Idempotent: safe across StrictMode double-renders.
-  setStorageNamespace(studentId)
+  setStorageNamespace(student?.id ?? null)
   return (
-    <GameProvider key={studentId ?? 'local'}>
+    <GameProvider
+      key={student?.id ?? 'local'}
+      remote={
+        student
+          ? { studentId: student.id, name: student.name, avatar: student.avatar }
+          : undefined
+      }
+    >
       <AppRoutes />
     </GameProvider>
   )
@@ -61,7 +69,7 @@ function Root() {
   const { configured, loading, session } = useAuth()
 
   // No Supabase env vars → original local-only behaviour, unchanged.
-  if (!configured) return <GameShell studentId={null} />
+  if (!configured) return <GameShell student={null} />
 
   if (loading) return <Splash label="Checking sign-in…" />
   if (!session) return <Login />
@@ -78,7 +86,7 @@ function SignedIn() {
   if (loading || provisioning) return <Splash label="Setting things up…" />
   // Fallback only — a primary learner is normally provisioned automatically.
   if (!activeStudent) return <Onboarding />
-  return <GameShell studentId={activeStudent.id} />
+  return <GameShell student={activeStudent} />
 }
 
 export default function App() {

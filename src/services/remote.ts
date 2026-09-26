@@ -1,5 +1,6 @@
 import { requireSupabase } from './supabaseClient'
 import type { StudentProgress, WeeklyLesson } from '../types'
+import type { StudentCosmetics } from './studentProfile'
 
 /**
  * Remote data access against the Supabase tables created by the
@@ -77,6 +78,18 @@ export async function renameStudentRow(id: string, name: string): Promise<void> 
 
 export async function deleteStudentRow(id: string): Promise<void> {
   const { error } = await requireSupabase().from('students').delete().eq('id', id)
+  if (error) throw error
+}
+
+/** Persist the cosmetic loadout into the `students.avatar` jsonb column. */
+export async function saveStudentCosmetics(
+  id: string,
+  cosmetics: StudentCosmetics,
+): Promise<void> {
+  const { error } = await requireSupabase()
+    .from('students')
+    .update({ avatar: cosmetics })
+    .eq('id', id)
   if (error) throw error
 }
 

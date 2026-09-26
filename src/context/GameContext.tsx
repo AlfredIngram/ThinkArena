@@ -27,6 +27,16 @@ import { getDailyMissions } from '../services/missionEngine'
 import { playSound } from '../services/sound'
 import { rewardById } from '../data/rewards'
 import { uid } from '../utils/random'
+import { weekKey } from '../utils/date'
+import { isSupabaseConfigured } from '../services/supabaseClient'
+import {
+  fetchLesson,
+  fetchProgress,
+  saveLessonRow,
+  saveProgressRow,
+  saveStudentCosmetics,
+} from '../services/remote'
+import { applyCosmetics, cosmeticsOf, type StudentCosmetics } from '../services/studentProfile'
 
 interface CelebrationState {
   id: string
@@ -82,10 +92,35 @@ interface GameContextValue {
 
 const GameContext = createContext<GameContextValue | null>(null)
 
+/** Identifies the signed-in learner whose data should sync to Supabase. */
+export interface RemoteGameRef {
+  studentId: string
+  name: string
+  avatar: Record<string, unknown>
+}
+
+/** How long to wait after a change before pushing it to Supabase (ms). */
+const REMOTE_SAVE_DEBOUNCE = 800
+
 const XP_MESSAGES = ['NICE JOB!', 'YOU GOT IT!', 'GREAT WORK!', 'KEEP GOING!', 'AMAZING!']
 
-export function GameProvider({ children }: { children: ReactNode }) {
-  const [student, setStudent] = useState<StudentProfile>(() => storage.getStudent())
+export function GameProvider({
+  children,
+  remote,
+}: {
+  children: ReactNode
+  remote?: RemoteGameRef
+}) {
+  // Remote write-through is only active when Supabase is configured AND we know
+  // which learner we're signed in as. Otherwise the provider is purely local.
+  const syncOn = Boolean(remote && isSupabaseConfigured)
+
+  const [student, setStudent] = useState<StudentProfile>(() => {
+    const base = storage.getStudent()
+    if (!remote) return base
+    const named = remote.name ? { ...base, name: remote.name } : base
+    return applyCosmetics(named, remote.avatar as Partial<StudentCosmetics>)
+  })
   const [lesson, setLesson] = useState<WeeklyLesson>(() => storage.getWeeklyLesson())
   const [progress, setProgress] = useState<StudentProgress>(() => storage.getProgress())
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -95,12 +130,90 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const progressRef = useRef(progress)
   const lessonRef = useRef(lesson)
 
+  // Gate auto-save until the first remote read finishes, so we never clobber
+  // remote data with the local cache mid-hydration.
+  const hydratedRef = useRef(!syncOn)
+  const [, setHydrated] = useState(!syncOn)
+
   useEffect(() => {
     progressRef.current = progress
   }, [progress])
   useEffect(() => {
     lessonRef.current = lesson
   }, [lesson])
+
+  // --- Remote hydration ---------------------------------------------------
+  useEffect(() => {
+    if (!syncOn || !remote) return
+    let active = true
+    ;(async () => {
+      try {
+        const [remoteLesson, remoteProgress] = await Promise.all([
+          fetchLesson(remote.studentId, weekKey()),
+          fetchProgress(remote.studentId),
+        ])
+        if (!active) return
+        if (remoteLesson) {
+          const merged = storage.hydrateLesson(remoteLesson)
+          lessonRef.current = merged
+          setLesson(merged)
+          storage.saveWeeklyLesson(merged)
+        } else {
+          // First run for this learner: seed the row from the local cache.
+          await saveLessonRow(remote.studentId, weekKey(), lessonRef.current)
+        }
+        if (remoteProgress) {
+          const merged = storage.hydrateProgress(remoteProgress)
+          progressRef.current = merged
+          setProgress(merged)
+          storage.saveProgress(merged)
+        } else {
+          await saveProgressRow(remote.studentId, progressRef.current)
+        }
+      } catch {
+        /* Offline or RLS denial: keep playing from the local cache. */
+      } finally {
+        if (active) {
+          hydratedRef.current = true
+          setHydrated(true)
+        }
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [syncOn, remote?.studentId])
+
+  // Keep the in-game name in step with renames made on the /learners screen.
+  useEffect(() => {
+    if (!remote?.name) return
+    setStudent((prev) => (prev.name === remote.name ? prev : { ...prev, name: remote.name }))
+  }, [remote?.name])
+
+  // --- Remote write-through (debounced) -----------------------------------
+  useEffect(() => {
+    if (!syncOn || !remote || !hydratedRef.current) return
+    const t = window.setTimeout(() => {
+      void saveProgressRow(remote.studentId, progress).catch(() => {})
+    }, REMOTE_SAVE_DEBOUNCE)
+    return () => window.clearTimeout(t)
+  }, [progress, syncOn, remote?.studentId])
+
+  useEffect(() => {
+    if (!syncOn || !remote || !hydratedRef.current) return
+    const t = window.setTimeout(() => {
+      void saveLessonRow(remote.studentId, weekKey(), lesson).catch(() => {})
+    }, REMOTE_SAVE_DEBOUNCE)
+    return () => window.clearTimeout(t)
+  }, [lesson, syncOn, remote?.studentId])
+
+  useEffect(() => {
+    if (!syncOn || !remote || !hydratedRef.current) return
+    const t = window.setTimeout(() => {
+      void saveStudentCosmetics(remote.studentId, cosmeticsOf(student)).catch(() => {})
+    }, REMOTE_SAVE_DEBOUNCE)
+    return () => window.clearTimeout(t)
+  }, [student, syncOn, remote?.studentId])
 
   const settings = progress.settings
 

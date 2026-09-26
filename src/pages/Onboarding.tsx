@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Loader2, Rocket, Users } from 'lucide-react'
+import { Check, Loader2, Pencil, Rocket, Users, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useStudents } from '../context/StudentContext'
 import { Splash } from '../components/Splash'
@@ -10,10 +10,14 @@ import { Splash } from '../components/Splash'
  */
 export function Onboarding() {
   const { profile, signOut } = useAuth()
-  const { loading, students, error, addStudent, selectStudent, removeStudent } = useStudents()
+  const { loading, students, error, addStudent, selectStudent, removeStudent, renameStudent } =
+    useStudents()
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [renaming, setRenaming] = useState(false)
 
   async function onAdd(e: FormEvent) {
     e.preventDefault()
@@ -30,6 +34,30 @@ export function Onboarding() {
   }
 
   if (loading) return <Splash label="Loading profiles…" />
+
+  function startEdit(id: string, current: string) {
+    setEditingId(id)
+    setEditName(current)
+  }
+
+  async function commitEdit() {
+    if (!editingId) return
+    const next = editName.trim()
+    const current = students.find((s) => s.id === editingId)?.name
+    if (!next || next === current) {
+      setEditingId(null)
+      return
+    }
+    setRenaming(true)
+    try {
+      await renameStudent(editingId, next)
+      setEditingId(null)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not rename the learner.')
+    } finally {
+      setRenaming(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -63,7 +91,51 @@ export function Onboarding() {
                 {student.name.slice(0, 1).toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-lg text-white">{student.name}</p>
+                {editingId === student.id ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      className="game-input py-1 text-base"
+                      value={editName}
+                      autoFocus
+                      maxLength={40}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void commitEdit()
+                        if (e.key === 'Escape') setEditingId(null)
+                      }}
+                    />
+                    <button
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-500/20 text-emerald-200"
+                      title="Save name"
+                      disabled={renaming}
+                      onClick={() => void commitEdit()}
+                    >
+                      {renaming ? (
+                        <Loader2 className="animate-spin" size={16} aria-hidden />
+                      ) : (
+                        <Check size={16} aria-hidden />
+                      )}
+                    </button>
+                    <button
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-white/50"
+                      title="Cancel"
+                      onClick={() => setEditingId(null)}
+                    >
+                      <X size={16} aria-hidden />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-display text-lg text-white">{student.name}</p>
+                    <button
+                      className="text-white/40 hover:text-white"
+                      title="Rename"
+                      onClick={() => startEdit(student.id, student.name)}
+                    >
+                      <Pencil size={14} aria-hidden />
+                    </button>
+                  </div>
+                )}
                 <button
                   className="btn-gold mt-1 px-4 text-sm"
                   onClick={() => selectStudent(student.id)}

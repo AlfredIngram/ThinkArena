@@ -73,12 +73,13 @@ export function saveStudent(student: StudentProfile): void {
 }
 
 export function getWeeklyLesson(): WeeklyLesson {
+  return hydrateLesson(read<Partial<WeeklyLesson>>(KEYS.lesson))
+}
+
+/** Merge a stored (or remote) lesson over defaults so fields never go missing. */
+export function hydrateLesson(stored: Partial<WeeklyLesson> | null): WeeklyLesson {
   const base = createLesson()
-  const stored = read<Partial<WeeklyLesson>>(KEYS.lesson)
-  if (!stored) {
-    write(KEYS.lesson, base)
-    return base
-  }
+  if (!stored) return base
   return {
     ...base,
     ...stored,
@@ -95,7 +96,7 @@ export function saveWeeklyLesson(lesson: WeeklyLesson): void {
 }
 
 /** Merge stored progress over a fresh default so new fields never go missing. */
-function hydrate(stored: Partial<StudentProgress> | null): StudentProgress {
+export function hydrateProgress(stored: Partial<StudentProgress> | null): StudentProgress {
   const base = createProgress()
   if (!stored) return base
   return {
@@ -117,7 +118,7 @@ function hydrate(stored: Partial<StudentProgress> | null): StudentProgress {
 
 export function getProgress(): StudentProgress {
   const stored = read<StudentProgress>(KEYS.progress)
-  const progress = hydrate(stored)
+  const progress = hydrateProgress(stored)
   // Roll daily missions forward if the app was last opened on an earlier day.
   progress.missions = rollMissionsIfNeeded(progress.missions, todayKey())
   return progress

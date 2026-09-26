@@ -91,6 +91,11 @@ site keeps working before the keys are set.
 
 ### Notes
 
+- **Data persistence:** with Supabase configured, `weekly_lessons.lesson`,
+  `student_progress.progress`, and `students.avatar` (cosmetics) are the source of truth;
+  `localStorage` is kept as an instant/offline cache. Writes are debounced (~800 ms) and
+  hydration is gated so the local cache never overwrites remote data on startup. In local
+  mode (no env vars) `localStorage` is the only store, exactly as before.
 - Supabase's **Confirm email** setting, if enabled, requires a click-through before the
   first sign-in. Disable it (Authentication → Providers → Email) for a frictionless,
   kid-focused flow.
