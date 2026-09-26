@@ -25,6 +25,9 @@ interface AuthValue {
   session: Session | null
   user: User | null
   profile: ProfileRow | null
+  /** Error passed back in the URL (e.g. an expired confirmation link). */
+  urlError: string | null
+  clearUrlError: () => void
   signIn: (email: string, password: string) => Promise<SignResult>
   signUp: (email: string, password: string, displayName: string) => Promise<SignResult>
   signOut: () => Promise<void>
@@ -32,10 +35,21 @@ interface AuthValue {
 
 const AuthContext = createContext<AuthValue | null>(null)
 
+/** Read `error` / `error_description` left in the URL by a failed auth link. */
+function readUrlAuthError(): string | null {
+  if (typeof window === 'undefined') return null
+  const hash = window.location.hash.replace(/^#/, '')
+  const search = window.location.search.replace(/^\?/, '')
+  const params = new URLSearchParams(hash || search)
+  const desc = params.get('error_description') || params.get('error')
+  return desc ? desc.replace(/\+/g, ' ') : null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<ProfileRow | null>(null)
+  const [urlError, setUrlError] = useState<string | null>(() => readUrlAuthError())
 
   // Load the stored session once, then track auth changes.
   useEffect(() => {
@@ -89,10 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (email: string, password: string, displayName: string): Promise<SignResult> => {
       if (!supabase) return { ok: false, error: 'Auth is not configured.' }
+      // Where the confirmation email should send the user afterwards. Supabase
+      // only honours this if the value is in the project's allowed redirect
+      // list (Authentication → URL Configuration); otherwise it falls back to
+      // the Site URL. Using the live origin makes it work on any deploy domain.
+      const emailRedirectTo =
+        typeof window !== 'undefined' ? window.location.origin + '/' : undefined
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { display_name: displayName.trim() || undefined } },
+        options: {
+          emailRedirectTo,
+          data: { display_name: displayName.trim() || undefined },
+        },
       })
       if (error) return { ok: false, error: error.message }
       // No session back means email confirmation is required.
@@ -114,11 +137,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       profile,
+      urlError,
+      clearUrlError: () => setUrlError(null),
       signIn,
       signUp,
       signOut,
     }),
-    [loading, session, profile, signIn, signUp, signOut],
+    [loading, session, profile, urlError, signIn, signUp, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

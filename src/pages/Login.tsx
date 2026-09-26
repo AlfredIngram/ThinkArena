@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 type Mode = 'signin' | 'signup'
 
 export function Login() {
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, urlError, clearUrlError } = useAuth()
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,6 +18,7 @@ export function Login() {
     e.preventDefault()
     setError(null)
     setNotice(null)
+    clearUrlError()
     setBusy(true)
     try {
       if (mode === 'signin') {
@@ -94,6 +95,13 @@ export function Login() {
             />
           </label>
 
+          {urlError && (
+            <p className="rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-bold text-amber-200">
+              {/expired|invalid/i.test(urlError)
+                ? 'That confirmation link has expired or was already used. Sign in below, or sign up again to get a fresh link.'
+                : urlError}
+            </p>
+          )}
           {error && (
             <p className="rounded-xl border border-red-400/40 bg-red-500/15 px-3 py-2 text-sm font-bold text-red-200">
               {error}
