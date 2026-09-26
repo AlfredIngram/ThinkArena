@@ -74,8 +74,9 @@ function Root() {
 }
 
 function SignedIn() {
-  const { loading, activeStudent } = useStudents()
-  if (loading) return <Splash label="Loading profiles…" />
+  const { loading, provisioning, activeStudent } = useStudents()
+  if (loading || provisioning) return <Splash label="Setting things up…" />
+  // Fallback only — a primary learner is normally provisioned automatically.
   if (!activeStudent) return <Onboarding />
   return <GameShell studentId={activeStudent.id} />
 }

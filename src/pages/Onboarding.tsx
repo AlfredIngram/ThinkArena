@@ -39,7 +39,9 @@ export function Onboarding() {
             Hi{profile?.display_name ? `, ${profile.display_name}` : ''} 👋
           </h1>
           <p className="text-sm text-white/60">
-            {students.length > 0 ? 'Pick a learner to start playing.' : 'Add your first learner to begin.'}
+            {students.length > 0
+              ? 'Your learners — pick one to play, or add another.'
+              : 'Add a learner to get started.'}
           </p>
         </div>
         <button className="btn-ghost text-sm" onClick={() => void signOut()}>
@@ -69,13 +71,15 @@ export function Onboarding() {
                   <Rocket size={16} aria-hidden /> Play
                 </button>
               </div>
-              <button
-                className="self-start text-xs text-white/40 hover:text-red-300"
-                title="Remove profile"
-                onClick={() => void removeStudent(student.id)}
-              >
-                ✕
-              </button>
+              {students.length > 1 && (
+                <button
+                  className="self-start text-xs text-white/40 hover:text-red-300"
+                  title="Remove profile"
+                  onClick={() => void removeStudent(student.id)}
+                >
+                  ✕
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -83,7 +87,7 @@ export function Onboarding() {
 
       <form onSubmit={onAdd} className="game-panel space-y-3 p-5">
         <h2 className="flex items-center gap-2 font-display text-lg text-white">
-          <Users size={18} aria-hidden /> {students.length > 0 ? 'Add another learner' : 'Add a learner'}
+          <Users size={18} aria-hidden /> Add a learner
         </h2>
         <input
           className="game-input"

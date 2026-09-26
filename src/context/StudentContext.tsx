@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -18,6 +19,8 @@ import {
 
 interface StudentValue {
   loading: boolean
+  /** True while the primary learner is being created for a fresh account. */
+  provisioning: boolean
   students: StudentRow[]
   activeStudent: StudentRow | null
   error: string | null
@@ -33,11 +36,13 @@ const StudentContext = createContext<StudentValue | null>(null)
 const ACTIVE_KEY = 'lul.activeStudent'
 
 export function StudentProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [provisioning, setProvisioning] = useState(false)
   const [students, setStudents] = useState<StudentRow[]>([])
   const [activeId, setActiveId] = useState<string | null>(() => localStorage.getItem(ACTIVE_KEY))
   const [error, setError] = useState<string | null>(null)
+  const provisionedRef = useRef(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -67,6 +72,11 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     void load()
   }, [user?.id, load])
 
+  // Reset the one-shot provisioning guard whenever the account changes.
+  useEffect(() => {
+    provisionedRef.current = false
+  }, [user?.id])
+
   const selectStudent = useCallback((id: string) => {
     setActiveId(id)
     localStorage.setItem(ACTIVE_KEY, id)
@@ -79,6 +89,32 @@ export function StudentProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ACTIVE_KEY, row.id)
     return row
   }, [])
+
+  // Every account gets a primary learner automatically — no forced onboarding.
+  // (New signups also get one from a DB trigger; this covers legacy/edge cases.)
+  useEffect(() => {
+    if (!user || loading || students.length > 0) return
+    if (provisionedRef.current) return
+    provisionedRef.current = true
+    let active = true
+    setProvisioning(true)
+    const name =
+      profile?.display_name?.trim() || profile?.email?.split('@')[0]?.trim() || 'My Learner'
+    addStudent(name)
+      .catch((err) => {
+        if (active) {
+          setError(
+            err instanceof Error ? err.message : 'Could not create the primary learner.',
+          )
+        }
+      })
+      .finally(() => {
+        if (active) setProvisioning(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [user, loading, students.length, profile, addStudent])
 
   const renameStudent = useCallback(async (id: string, name: string) => {
     await renameStudentRow(id, name)
@@ -111,6 +147,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   const value = useMemo<StudentValue>(
     () => ({
       loading,
+      provisioning,
       students,
       activeStudent,
       error,
@@ -120,7 +157,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
       removeStudent,
       refresh: load,
     }),
-    [loading, students, activeStudent, error, selectStudent, addStudent, renameStudent, removeStudent, load],
+    [loading, provisioning, students, activeStudent, error, selectStudent, addStudent, renameStudent, removeStudent, load],
   )
 
   return <StudentContext.Provider value={value}>{children}</StudentContext.Provider>
