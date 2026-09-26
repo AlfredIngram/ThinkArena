@@ -30,6 +30,8 @@ export interface StudentProfile {
   backgroundId: string
   frameId: string
   badgeId: string | null
+  /** Layered cosmetic loadout, keyed by wardrobe slot. */
+  wardrobe: WardrobeEquip
   pin: string
   createdAt: string
 }
@@ -91,6 +93,31 @@ export interface WeeklyProgress {
   coins: number
 }
 
+/** One day of activity. The append-only timeline that powers monthly,
+ *  yearly, and heatmap views (weekly counters stay as the fast path). */
+export interface DailyRecord {
+  /** YYYY-MM-DD (local). */
+  date: string
+  xp: number
+  coins: number
+  correct: number
+  spellingCorrect: number
+  mathCorrect: number
+  verseStages: number
+}
+
+/** Aggregated activity over any window (week / month / year). */
+export interface TimeframeTotals {
+  xp: number
+  coins: number
+  correct: number
+  spellingCorrect: number
+  mathCorrect: number
+  verseStages: number
+  /** Days with at least one logged activity. */
+  daysActive: number
+}
+
 export interface BibleVerse {
   reference: string
   text: string
@@ -108,6 +135,14 @@ export interface WeeklyGoals {
   weeklyXpGoal: number
 }
 
+/** Longer-horizon targets edited in Parent Mode. */
+export interface LongGoals {
+  monthlyXpGoal: number
+  monthlyCorrectGoal: number
+  yearlyXpGoal: number
+  yearlyCorrectGoal: number
+}
+
 export interface RewardSettings {
   coinsPerCorrect: number
   /** Global multiplier so parents can dial rewards up or down. */
@@ -120,6 +155,7 @@ export interface WeeklyLesson {
   bibleVerse: BibleVerse
   math: MathSettings
   goals: WeeklyGoals
+  longGoals: LongGoals
   reward: RewardSettings
 }
 
@@ -140,6 +176,8 @@ export interface StudentProgress {
   rewards: string[]
   missions: MissionProgress
   weekly: WeeklyProgress
+  /** Append-only per-day timeline (capped) for month/year/heatmap views. */
+  history: DailyRecord[]
   totals: Totals
   sessions: ActivitySession[]
   settings: Settings
@@ -175,6 +213,35 @@ export interface AchievementDef {
 }
 
 export type RewardCategory = 'avatar' | 'background' | 'frame' | 'badge' | 'pet'
+
+// --- Wardrobe (layered avatar cosmetics) --------------------------------
+
+export type WardrobeSlot =
+  | 'base'
+  | 'skin'
+  | 'hair'
+  | 'outfit'
+  | 'accessory'
+  | 'pet'
+  | 'aura'
+
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary'
+
+/** Which item id is equipped in each slot. */
+export type WardrobeEquip = Record<WardrobeSlot, string>
+
+export interface WardrobeItem {
+  id: string
+  slot: WardrobeSlot
+  name: string
+  rarity: Rarity
+  cost: number
+  description: string
+  /** Optional raster art. Drop PNGs in `public/avatars/` and set e.g. `/avatars/hero.png`. */
+  image?: string
+  /** Rendering hints consumed by <Avatar/>. */
+  art: Record<string, string | number | boolean>
+}
 
 export interface RewardDef {
   id: string

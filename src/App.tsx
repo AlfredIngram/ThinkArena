@@ -6,6 +6,8 @@ import { SpellingQuest } from './pages/SpellingQuest'
 import { MathBattle } from './pages/MathBattle'
 import { VerseVault } from './pages/VerseVault'
 import { WeeklyMap } from './pages/WeeklyMap'
+import { Goals } from './pages/Goals'
+import { Wardrobe } from './pages/Wardrobe'
 import { Rewards } from './pages/Rewards'
 import { Achievements } from './pages/Achievements'
 import { ParentDashboard } from './pages/ParentDashboard'
@@ -22,6 +24,8 @@ export default function App() {
             <Route path="/math" element={<MathBattle />} />
             <Route path="/verse" element={<VerseVault />} />
             <Route path="/map" element={<WeeklyMap />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/wardrobe" element={<Wardrobe />} />
             <Route path="/rewards" element={<Rewards />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/parent" element={<ParentDashboard />} />

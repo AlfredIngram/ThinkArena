@@ -308,6 +308,37 @@ export function ParentDashboard() {
           />
         </label>
 
+        <div className="mt-5 border-t border-white/10 pt-4">
+          <span className="mb-2 block text-xs uppercase tracking-wide text-white/60">
+            Long-term goals (shown on the Goals page)
+          </span>
+          <div className="grid gap-3 sm:grid-cols-4">
+            {(
+              [
+                ['monthlyXpGoal', 'Monthly XP'],
+                ['monthlyCorrectGoal', 'Monthly correct'],
+                ['yearlyXpGoal', 'Yearly XP'],
+                ['yearlyCorrectGoal', 'Yearly correct'],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="text-left">
+                <span className="mb-1 block text-xs uppercase tracking-wide text-white/60">{label}</span>
+                <input
+                  type="number"
+                  min={0}
+                  className="game-input w-full"
+                  value={draft.longGoals[key]}
+                  onChange={(e) =>
+                    patchDraft({
+                      longGoals: { ...draft.longGoals, [key]: Number(e.target.value) },
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button className="btn-success" onClick={saveLesson}>
             <Save size={18} aria-hidden /> Save lesson

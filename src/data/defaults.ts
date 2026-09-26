@@ -1,15 +1,18 @@
 import type {
   DifficultyLevel,
+  LongGoals,
   MathSettings,
   MissionProgress,
   Settings,
   StudentProfile,
   StudentProgress,
+  WardrobeEquip,
   WeeklyGoals,
   WeeklyLesson,
   WeeklyProgress,
 } from '../types'
 import { todayKey, weekKey } from '../utils/date'
+import { DEFAULT_OWNED_WARDROBE, DEFAULT_WARDROBE } from './wardrobe'
 
 export const STORAGE_VERSION = 1
 export const DEFAULT_PARENT_PIN = '1234'
@@ -47,6 +50,14 @@ export const DEFAULT_GOALS: WeeklyGoals = {
   weeklyXpGoal: 1500,
 }
 
+/** Sensible starting targets for the longer horizons (~4 weeks/month). */
+export const DEFAULT_LONG_GOALS: LongGoals = {
+  monthlyXpGoal: 6000,
+  monthlyCorrectGoal: 200,
+  yearlyXpGoal: 60000,
+  yearlyCorrectGoal: 2000,
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   sound: true,
   music: false,
@@ -62,9 +73,14 @@ export function createStudent(name = 'Player One'): StudentProfile {
     backgroundId: 'bg-nebula',
     frameId: 'frame-basic',
     badgeId: null,
+    wardrobe: { ...DEFAULT_WARDROBE },
     pin: DEFAULT_PARENT_PIN,
     createdAt: new Date().toISOString(),
   }
+}
+
+export function createWardrobe(): WardrobeEquip {
+  return { ...DEFAULT_WARDROBE }
 }
 
 export function createLesson(): WeeklyLesson {
@@ -74,6 +90,7 @@ export function createLesson(): WeeklyLesson {
     bibleVerse: { ...DEFAULT_VERSE },
     math: { ...DEFAULT_MATH, topics: [...DEFAULT_MATH.topics] },
     goals: { ...DEFAULT_GOALS },
+    longGoals: { ...DEFAULT_LONG_GOALS },
     reward: { coinsPerCorrect: 5, multiplier: 1 },
   }
 }
@@ -113,9 +130,10 @@ export function createProgress(): StudentProgress {
     math: {},
     verse: {},
     achievements: [],
-    rewards: ['avatar-astro', 'bg-nebula', 'frame-basic'],
+    rewards: ['avatar-astro', 'bg-nebula', 'frame-basic', ...DEFAULT_OWNED_WARDROBE],
     missions: createEmptyMissions(),
     weekly: createEmptyWeekly(),
+    history: [],
     totals: {
       correct: 0,
       incorrect: 0,

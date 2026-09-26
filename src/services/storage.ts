@@ -1,5 +1,6 @@
 import type { Settings, StudentProfile, StudentProgress, WeeklyLesson } from '../types'
 import { createLesson, createProgress, createStudent, createEmptyWeekly, STORAGE_VERSION } from '../data/defaults'
+import { DEFAULT_OWNED_WARDROBE } from '../data/wardrobe'
 import { todayKey, weekKey } from '../utils/date'
 import { rollMissionsIfNeeded } from './missionEngine'
 
@@ -35,11 +36,18 @@ function write(key: string, value: unknown): void {
 }
 
 export function getStudent(): StudentProfile {
-  const stored = read<StudentProfile>(KEYS.student)
-  if (stored) return stored
-  const fresh = createStudent()
-  write(KEYS.student, fresh)
-  return fresh
+  const base = createStudent()
+  const stored = read<Partial<StudentProfile>>(KEYS.student)
+  if (!stored) {
+    write(KEYS.student, base)
+    return base
+  }
+  // Merge over defaults so newly-added fields (e.g. wardrobe) never go missing.
+  return {
+    ...base,
+    ...stored,
+    wardrobe: { ...base.wardrobe, ...(stored.wardrobe ?? {}) },
+  }
 }
 
 export function saveStudent(student: StudentProfile): void {
@@ -47,11 +55,21 @@ export function saveStudent(student: StudentProfile): void {
 }
 
 export function getWeeklyLesson(): WeeklyLesson {
-  const stored = read<WeeklyLesson>(KEYS.lesson)
-  if (stored) return stored
-  const fresh = createLesson()
-  write(KEYS.lesson, fresh)
-  return fresh
+  const base = createLesson()
+  const stored = read<Partial<WeeklyLesson>>(KEYS.lesson)
+  if (!stored) {
+    write(KEYS.lesson, base)
+    return base
+  }
+  return {
+    ...base,
+    ...stored,
+    bibleVerse: { ...base.bibleVerse, ...(stored.bibleVerse ?? {}) },
+    math: { ...base.math, ...(stored.math ?? {}) },
+    goals: { ...base.goals, ...(stored.goals ?? {}) },
+    longGoals: { ...base.longGoals, ...(stored.longGoals ?? {}) },
+    reward: { ...base.reward, ...(stored.reward ?? {}) },
+  }
 }
 
 export function saveWeeklyLesson(lesson: WeeklyLesson): void {
@@ -72,7 +90,10 @@ function hydrate(stored: Partial<StudentProgress> | null): StudentProgress {
     spelling: stored.spelling ?? {},
     math: stored.math ?? {},
     verse: stored.verse ?? {},
-    rewards: stored.rewards ?? base.rewards,
+    history: stored.history ?? base.history,
+    // Free wardrobe items are always owned, even for progress saved before the
+    // wardrobe shipped.
+    rewards: Array.from(new Set([...(stored.rewards ?? base.rewards), ...DEFAULT_OWNED_WARDROBE])),
   }
 }
 

@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test:auth": "node --experimental-strip-types scripts/test-basic-auth.mts"
+    "test:auth": "node --experimental-strip-types scripts/test-basic-auth.mts",
+    "test:engines": "esbuild scripts/test-engines.ts --bundle --platform=node --format=esm --outfile=node_modules/.ta-engines.mjs && node node_modules/.ta-engines.mjs"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",

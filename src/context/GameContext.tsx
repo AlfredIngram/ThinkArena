@@ -17,6 +17,7 @@ import type {
   StudentProfile,
   StudentProgress,
   Toast,
+  WardrobeItem,
   WeeklyLesson,
 } from '../types'
 import * as storage from '../services/storage'
@@ -61,6 +62,10 @@ interface GameContextValue {
   // Rewards / cosmetics
   purchaseReward: (reward: RewardDef) => { ok: boolean; reason?: 'owned' | 'poor' }
   equipReward: (rewardId: string) => void
+  /** Buy a layered-wardrobe item with coins. */
+  buyWardrobeItem: (item: WardrobeItem) => { ok: boolean; reason?: 'owned' | 'poor' }
+  /** Equip an owned wardrobe item into its slot. */
+  equipWardrobeItem: (item: WardrobeItem) => void
 
   // Parent mode
   saveStudent: (partial: Partial<StudentProfile>) => void
@@ -231,6 +236,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [buzz],
   )
 
+  const buyWardrobeItem = useCallback(
+    (item: WardrobeItem) => {
+      const current = progressRef.current
+      const result = engine.purchaseReward(current, item)
+      if (result.ok) {
+        progressRef.current = result.next
+        setProgress(result.next)
+        storage.saveProgress(result.next)
+        buzz('coin')
+        pushToast({ label: `Unlocked ${item.name}!`, tone: 'success', icon: '🎁' })
+      }
+      return { ok: result.ok, reason: result.reason }
+    },
+    [buzz, pushToast],
+  )
+
+  const equipWardrobeItem = useCallback(
+    (item: WardrobeItem) => {
+      setStudent((prev) => {
+        const next: StudentProfile = {
+          ...prev,
+          wardrobe: { ...prev.wardrobe, [item.slot]: item.id },
+        }
+        storage.saveStudent(next)
+        return next
+      })
+      buzz('click')
+    },
+    [buzz],
+  )
+
   const saveStudent = useCallback((partial: Partial<StudentProfile>) => {
     setStudent((prev) => {
       const next = { ...prev, ...partial }
@@ -324,6 +360,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markCheckpoint,
       purchaseReward,
       equipReward,
+      buyWardrobeItem,
+      equipWardrobeItem,
       saveStudent,
       saveLesson,
       updateLesson,
@@ -349,6 +387,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       markCheckpoint,
       purchaseReward,
       equipReward,
+      buyWardrobeItem,
+      equipWardrobeItem,
       saveStudent,
       saveLesson,
       updateLesson,

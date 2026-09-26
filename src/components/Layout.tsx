@@ -7,9 +7,11 @@ import {
   Home as HomeIcon,
   Map,
   Settings as SettingsIcon,
+  Shirt,
   Shield,
   Sparkles,
   Swords,
+  Target,
   Trophy,
   X,
 } from 'lucide-react'
@@ -29,6 +31,8 @@ const NAV = [
   { to: '/math', label: 'Math', icon: Swords },
   { to: '/verse', label: 'Verse', icon: Sparkles },
   { to: '/map', label: 'Map', icon: Map },
+  { to: '/goals', label: 'Goals', icon: Target },
+  { to: '/wardrobe', label: 'Wardrobe', icon: Shirt },
   { to: '/rewards', label: 'Shop', icon: Coins },
   { to: '/achievements', label: 'Trophies', icon: Trophy },
 ]

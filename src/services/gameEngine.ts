@@ -4,7 +4,6 @@ import type {
   MathCategoryStats,
   MathTopic,
   MissionDef,
-  RewardDef,
   StudentProgress,
   VerseStats,
   WeeklyLesson,
@@ -12,6 +11,7 @@ import type {
 import { COINS, XP, levelFromXp, streakBonusCoins, streakBonusXp } from './xpEngine'
 import { evaluateAchievements } from './achievementEngine'
 import { missionsReadyToClaim, rollMissionsIfNeeded } from './missionEngine'
+import { applyDailyRecord, type ActivityDelta } from './timeframeEngine'
 import { todayKey, weekKey, yesterdayKey } from '../utils/date'
 import { uid } from '../utils/random'
 import { createEmptyMissions, createEmptyWeekly } from '../data/defaults'
@@ -85,8 +85,16 @@ function touchStreak(progress: StudentProgress): { next: StudentProgress; bonus:
 /**
  * Shared tail for every scored action:
  * apply payout -> streak -> daily missions -> achievements -> level recalc.
+ * `subject` records which subject the action belongs to so the daily timeline
+ * (and therefore the monthly/yearly views) can break progress down correctly.
  */
-function finalize(prev: StudentProgress, lesson: WeeklyLesson, payout: Payout, correct: boolean): EngineResult {
+function finalize(
+  prev: StudentProgress,
+  lesson: WeeklyLesson,
+  payout: Payout,
+  correct: boolean,
+  subject: ActivityDelta = {},
+): EngineResult {
   let work: StudentProgress = {
     ...prev,
     xp: prev.xp + payout.xp,
@@ -136,6 +144,14 @@ function finalize(prev: StudentProgress, lesson: WeeklyLesson, payout: Payout, c
       xp: work.weekly.xp + (work.xp - prev.xp),
       coins: work.weekly.coins + (work.coins - prev.coins),
     },
+    // Append to the daily timeline that powers month/year/heatmap views.
+    // `subject` carries the per-action breakdown (spelling/math/verse + correct).
+    history: applyDailyRecord(prev.history ?? [], todayKey(), {
+      xp: work.xp - prev.xp,
+      coins: work.coins - prev.coins,
+      correct: 0,
+      ...subject,
+    }),
   }
 
   return {
@@ -196,10 +212,11 @@ export function recordSpellingAttempt(
   }
 
   const payout = correct ? { xp: XP.correct, coins: COINS.correct } : { xp: 0, coins: 0 }
-  return finalize(base, lesson, payout, correct)
+  return finalize(base, lesson, payout, correct, {
+    spellingCorrect: correct ? 1 : 0,
+    correct: correct ? 1 : 0,
+  })
 }
-
-// --- Math ----------------------------------------------------------------
 
 export function recordMathAttempt(
   prev: StudentProgress,
@@ -242,7 +259,10 @@ export function recordMathAttempt(
   }
 
   const payout = correct ? { xp: XP.correct, coins: COINS.correct } : { xp: 0, coins: 0 }
-  return finalize(base, lesson, payout, correct)
+  return finalize(base, lesson, payout, correct, {
+    mathCorrect: correct ? 1 : 0,
+    correct: correct ? 1 : 0,
+  })
 }
 
 // --- Bible verse ---------------------------------------------------------
@@ -295,7 +315,10 @@ export function recordVerseStage(
       }
     : { xp: 0, coins: 0 }
 
-  return finalize(base, lesson, payout, correct)
+  return finalize(base, lesson, payout, correct, {
+    verseStages: correct ? 1 : 0,
+    correct: correct ? 1 : 0,
+  })
 }
 
 // --- Round / session ends ------------------------------------------------
@@ -410,7 +433,7 @@ export interface PurchaseResult {
 
 export function purchaseReward(
   prev: StudentProgress,
-  reward: RewardDef,
+  reward: { id: string; cost: number },
 ): PurchaseResult {
   if (prev.rewards.includes(reward.id)) return { next: prev, ok: false, reason: 'owned' }
   if (prev.coins < reward.cost) return { next: prev, ok: false, reason: 'poor' }

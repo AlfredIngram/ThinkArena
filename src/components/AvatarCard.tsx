@@ -1,5 +1,6 @@
-import type { RewardDef, StudentProfile } from '../types'
+import type { StudentProfile } from '../types'
 import { rewardById } from '../data/rewards'
+import { Avatar } from './Avatar'
 
 interface AvatarCardProps {
   student: StudentProfile
@@ -8,22 +9,28 @@ interface AvatarCardProps {
 }
 
 const SIZES = {
-  sm: { box: 'h-16 w-16', art: 'text-3xl' },
-  md: { box: 'h-24 w-24', art: 'text-5xl' },
-  lg: { box: 'h-36 w-36', art: 'text-7xl' },
+  sm: { box: 'h-16 w-16', px: 64 },
+  md: { box: 'h-24 w-24', px: 96 },
+  lg: { box: 'h-36 w-36', px: 144 },
 }
 
-function safeReward(id: string): RewardDef | undefined {
-  return rewardById(id)
-}
+const FALLBACK_WARDROBE = {
+  base: 'base-round',
+  skin: 'skin-peach',
+  hair: 'hair-tuft',
+  outfit: 'outfit-tee',
+  accessory: 'accessory-none',
+  pet: 'pet-none',
+  aura: 'aura-none',
+} as const
 
-/** The student's profile character: avatar + background + frame + badge. */
+/** The student's profile character: layered avatar + background + frame + badge. */
 export function AvatarCard({ student, size = 'md', showBadge = true }: AvatarCardProps) {
-  const avatar = safeReward(student.avatarId)
-  const background = safeReward(student.backgroundId)
-  const frame = safeReward(student.frameId)
-  const badge = student.badgeId ? safeReward(student.badgeId) : undefined
+  const background = rewardById(student.backgroundId)
+  const frame = rewardById(student.frameId)
+  const badge = student.badgeId ? rewardById(student.badgeId) : undefined
   const s = SIZES[size]
+  const equip = student.wardrobe ?? { ...FALLBACK_WARDROBE }
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -37,9 +44,7 @@ export function AvatarCard({ student, size = 'md', showBadge = true }: AvatarCar
         } bg-gradient-to-br ${background?.gradient ?? 'from-indigo-700 to-slate-900'}`}
         aria-label={`${student.name}'s avatar`}
       >
-        <span className={`${s.art} drop-shadow-lg`} aria-hidden>
-          {avatar?.art ?? '🚀'}
-        </span>
+        <Avatar equip={equip} size={s.px} label={`${student.name}'s avatar`} />
         {showBadge && badge && (
           <span
             className="absolute -bottom-1 -right-1 rounded-full bg-arena-night/90 p-1 text-xl"
