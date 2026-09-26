@@ -67,6 +67,12 @@ to force a re-prompt, close the tab or use a private window.
 `students` rows owned by that parent — no email needed for a child. Each kid can later be
 given their own login via the nullable `students.auth_user_id`, with no migration.
 
+The longer-term platform architecture is documented in
+[`docs/platform-foundation.md`](docs/platform-foundation.md). It keeps today's family
+experience working while preparing for households, teachers, tutors, classrooms, schools,
+permission-scoped child access, learning events, reward ledgers, companions, and future AI
+features.
+
 ### Tables (all Row-Level-Security'd to the owner)
 
 | table | purpose |
