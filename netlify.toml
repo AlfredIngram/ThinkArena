@@ -10,6 +10,14 @@
 #   BASIC_AUTH_PASS   password for the login prompt
 #
 # Without them the site returns 503 rather than serving unprotected content.
+#
+# Supabase (per-user accounts) — set these to enable the login screen:
+#
+#   VITE_SUPABASE_URL        e.g. https://<project-ref>.supabase.co
+#   VITE_SUPABASE_ANON_KEY   the publishable/anon key (public by design)
+#
+# Vite bakes VITE_* values at build time, so changing them requires a redeploy.
+# If they are absent the app falls back to local-only (localStorage) mode.
 
 [build]
   command = "npm run build"

@@ -8,7 +8,10 @@ import { rollMissionsIfNeeded } from './missionEngine'
  * Storage service - the ONLY place that knows about persistence.
  *
  * Swapping localStorage for Supabase later means implementing the same four
- * functions against the remote adapter in `services/supabase.ts`.
+ * functions against the remote adapter in `services/remote.ts`.
+ *
+ * Keys are namespaced per active student (see `setStorageNamespace`) so
+ * multiple accounts on one browser never share data.
  */
 
 const KEYS = {
@@ -18,9 +21,24 @@ const KEYS = {
   progress: 'lul.progress',
 } as const
 
+/**
+ * Namespace all keys by the active student so two accounts (or two kids on one
+ * browser) never read each other's data. `'local'` keeps the original
+ * un-prefixed keys so the pre-auth build's saved data still loads.
+ */
+let namespace = 'local'
+
+export function setStorageNamespace(ns: string | null | undefined): void {
+  namespace = ns && ns.length > 0 ? ns : 'local'
+}
+
+function scoped(key: string): string {
+  return namespace === 'local' ? key : `${key}.${namespace}`
+}
+
 function read<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key)
+    const raw = localStorage.getItem(scoped(key))
     return raw ? (JSON.parse(raw) as T) : null
   } catch {
     return null
@@ -29,7 +47,7 @@ function read<T>(key: string): T | null {
 
 function write(key: string, value: unknown): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value))
+    localStorage.setItem(scoped(key), JSON.stringify(value))
   } catch {
     /* Quota or private-mode failures shouldn't break gameplay. */
   }

@@ -7,6 +7,7 @@ Web app, deployed on Netlify, protected by a username + password.
 - Vite + React + TypeScript (static SPA build → `dist/`)
 - Netlify config in `netlify.toml` (build `npm run build`, publish `dist`, SPA fallback)
 - Site-wide HTTP Basic Auth via a Netlify Edge Function (`netlify/edge-functions/basic-auth.ts`)
+- Per-user accounts via **Supabase Auth** (email + password) — see [Accounts](#accounts-supabase-auth)
 - Netlify Functions can be added under `netlify/functions/` if server-side work is needed
 
 ## Features
@@ -21,6 +22,8 @@ Web app, deployed on Netlify, protected by a username + password.
   a wardrobe item's `image` field at them to swap in raster art.
 - **Parent mode** (`/parent`, PIN `1234` by default) — edit weekly + long-term goals,
   reward multiplier.
+- **Accounts + learner profiles** (`/learners`) — parents sign in with email + password;
+  each parent owns one or more kid profiles. Nothing is stored unless a parent is signed in.
 
 ## Tests
 
@@ -57,6 +60,44 @@ npx netlify deploy --build --prod
 
 Update `BASIC_AUTH_PASS` and redeploy. Browsers cache Basic credentials per session;
 to force a re-prompt, close the tab or use a private window.
+
+## Accounts (Supabase Auth)
+
+**Model:** a parent/guardian is a Supabase Auth user (email + password). Kids are
+`students` rows owned by that parent — no email needed for a child. Each kid can later be
+given their own login via the nullable `students.auth_user_id`, with no migration.
+
+### Tables (all Row-Level-Security'd to the owner)
+
+| table | purpose |
+| --- | --- |
+| `profiles` | one row per auth user; auto-created on signup by a trigger |
+| `students` | kid profiles (`owner_id` → parent) |
+| `weekly_lessons` | one row per student per week (`unique(student_id, week_of)`) |
+| `student_progress` | one row per student |
+
+Access helpers (`can_access_student`, `owns_student`) live in a non-exposed `private`
+schema and are callable only by `authenticated`.
+
+### Enabling it
+
+1. Netlify → **Environment variables** → add:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY` (publishable key — public by design; RLS is the guard)
+2. **Redeploy** (Vite bakes `VITE_*` at build time).
+
+If those variables are absent the app falls back to local-only (localStorage) mode, so the
+site keeps working before the keys are set.
+
+### Notes
+
+- Supabase's **Confirm email** setting, if enabled, requires a click-through before the
+  first sign-in. Disable it (Authentication → Providers → Email) for a frictionless,
+  kid-focused flow.
+- Basic Auth (above) can stay as an outer gate or be removed once per-user login is trusted;
+  the two are independent.
+- Learner data is namespaced per student in localStorage, so two accounts on one browser
+  never read each other's data.
 
 ## Local dev
 

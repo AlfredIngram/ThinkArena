@@ -13,6 +13,7 @@
     "test:engines": "esbuild scripts/test-engines.ts --bundle --platform=node --format=esm --outfile=node_modules/.ta-engines.mjs && node node_modules/.ta-engines.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",

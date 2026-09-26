@@ -5,6 +5,7 @@ import {
   Coins,
   Gamepad2,
   Home as HomeIcon,
+  LogOut,
   Map,
   Settings as SettingsIcon,
   Shirt,
@@ -13,10 +14,12 @@ import {
   Swords,
   Target,
   Trophy,
+  Users,
   X,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useGame } from '../context/GameContext'
+import { useAuth } from '../context/AuthContext'
 import { AvatarCard } from './AvatarCard'
 import { CoinCounter } from './CoinCounter'
 import { StreakBadge } from './StreakBadge'
@@ -35,6 +38,7 @@ const NAV = [
   { to: '/wardrobe', label: 'Wardrobe', icon: Shirt },
   { to: '/rewards', label: 'Shop', icon: Coins },
   { to: '/achievements', label: 'Trophies', icon: Trophy },
+  { to: '/learners', label: 'Learners', icon: Users },
 ]
 
 export function Layout() {
@@ -180,6 +184,7 @@ function Toggle({
 
 function SettingsPanel({ onClose, settings, updateSettings, resetProgress }: SettingsPanelProps) {
   const { student } = useGame()
+  const { configured, signOut } = useAuth()
   const [confirmReset, setConfirmReset] = useState(false)
 
   return (
@@ -231,6 +236,15 @@ function SettingsPanel({ onClose, settings, updateSettings, resetProgress }: Set
             onChange={(v) => updateSettings({ reducedMotion: v })}
           />
         </div>
+
+        {configured && (
+          <button
+            className="btn-ghost mt-5 w-full text-base"
+            onClick={() => void signOut()}
+          >
+            <LogOut size={18} aria-hidden /> Sign out
+          </button>
+        )}
 
         <div className="mt-5 border-t border-white/10 pt-4">
           {!confirmReset ? (
