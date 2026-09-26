@@ -86,6 +86,22 @@ export const WARDROBE: WardrobeItem[] = [
   { id: 'base-bunny', slot: 'base', name: 'Bunny Head', rarity: 'rare', cost: 250, description: 'Long floppy ears.', art: { head: 46, bodyW: 84, bodyH: 74, ears: 'bunny' } },
   { id: 'base-dragon', slot: 'base', name: 'Dragonling', rarity: 'epic', cost: 650, description: 'Tiny horns, big heart.', art: { head: 46, bodyW: 88, bodyH: 78, ears: 'horn' } },
 
+  // Characters (raster art) ---------------------------------------------
+  // One full-body transparent PNG each (in `public/avatars/`). When a
+  // character is equipped the renderer draws the whole avatar from the
+  // image, so skin/hair/outfit/etc. layers do not apply. Owned from the
+  // start - kids pick a character, not buy one.
+  { id: 'char-rex', slot: 'base', name: 'Rex', rarity: 'rare', cost: 0, description: 'A bold little daredevil.', image: '/avatars/rex.png', art: {} },
+  { id: 'char-ink', slot: 'base', name: 'Ink', rarity: 'rare', cost: 0, description: 'Cool, calm and clever.', image: '/avatars/ink.png', art: {} },
+  { id: 'char-byte', slot: 'base', name: 'Byte', rarity: 'epic', cost: 0, description: 'Half robot, all heart.', image: '/avatars/byte.png', art: {} },
+  { id: 'char-pixel', slot: 'base', name: 'Pixel', rarity: 'epic', cost: 0, description: 'Playful and bright.', image: '/avatars/pixel.png', art: {} },
+  { id: 'char-mochi', slot: 'base', name: 'Mochi', rarity: 'rare', cost: 0, description: 'Soft, squishy, sweet.', image: '/avatars/mochi.png', art: {} },
+  { id: 'char-pebble', slot: 'base', name: 'Pebble', rarity: 'common', cost: 0, description: 'Small but sturdy.', image: '/avatars/pebble.png', art: {} },
+  { id: 'char-crash', slot: 'base', name: 'Crash', rarity: 'epic', cost: 0, description: 'Loud, fun and fearless.', image: '/avatars/crash.png', art: {} },
+  { id: 'char-dash', slot: 'base', name: 'Dash', rarity: 'legendary', cost: 0, description: 'Fastest friend around.', image: '/avatars/dash.png', art: {} },
+  { id: 'char-bloop', slot: 'base', name: 'Bloop', rarity: 'common', cost: 0, description: 'A cheerful little blob.', image: '/avatars/bloop.png', art: {} },
+  { id: 'char-zap', slot: 'base', name: 'Zap', rarity: 'legendary', cost: 0, description: 'Buzzing with energy.', image: '/avatars/zap.png', art: {} },
+
   // Skin ----------------------------------------------------------------
   { id: 'skin-peach', slot: 'skin', name: 'Peach', rarity: 'common', cost: 0, description: 'Warm and friendly.', art: { body: '#ffd7b5', blush: '#ff9db1' } },
   { id: 'skin-mint', slot: 'skin', name: 'Mint', rarity: 'common', cost: 0, description: 'Fresh and cool.', art: { body: '#bff3d8', blush: '#ff9db1' } },
