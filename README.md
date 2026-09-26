@@ -1,14 +1,14 @@
 # ThinkArena
 
-Web app, deployed on Netlify, protected by a username + password.
+Web app, deployed on Netlify, protected by per-user accounts.
 
 ## Stack
 
 - Vite + React + TypeScript (static SPA build → `dist/`)
 - Netlify config in `netlify.toml` (build `npm run build`, publish `dist`, SPA fallback)
-- Site-wide HTTP Basic Auth via a Netlify Edge Function (`netlify/edge-functions/basic-auth.ts`)
 - Per-user accounts via **Supabase Auth** (email + password) — see [Accounts](#accounts-supabase-auth)
 - Netlify Functions can be added under `netlify/functions/` if server-side work is needed
+- *(The old site-wide HTTP Basic Auth edge function is disabled — see `netlify/edge-functions.disabled/`.)*
 
 ## Features
 
@@ -28,38 +28,28 @@ Web app, deployed on Netlify, protected by a username + password.
 ## Tests
 
 ```bash
-npm run test:auth      # HTTP Basic Auth edge-function cases
+npm run test:auth      # (legacy) HTTP Basic Auth edge-function cases
 npm run test:engines   # XP / timeframe / wardrobe engine smoke tests
 ```
 
-## Access control (username + password)
+## Access control (Supabase Auth)
 
-`netlify/edge-functions/basic-auth.ts` runs on every request (`/*`) and requires HTTP
-Basic Auth. Browsers show their native login dialog. Credentials come from environment
-variables and are never stored in the repo.
+The app is gated by **per-user Supabase accounts** (email + password), not a shared
+password. Parents sign in, then manage kid learner profiles.
 
-### One-time setup
+> **HTTP Basic Auth is disabled.** The old single shared username/password gate was a
+> Netlify Edge Function that ran on every request and made the browser show a native
+> login dialog *before* the app loaded. It now lives in
+> `netlify/edge-functions.disabled/basic-auth.ts` — outside the `netlify/edge-functions/`
+> directory Netlify auto-deploys — so it no longer runs.
+>
+> Do **not** "disable" it by deleting `BASIC_AUTH_USER`/`BASIC_AUTH_PASS`: the handler is
+> written to fail closed (HTTP 503) when those are unset. Removing the function file from
+> the deploy path is the correct way to turn it off.
 
-1. Netlify → your site → **Site configuration → Environment variables** → add:
-   - `BASIC_AUTH_USER` — the username
-   - `BASIC_AUTH_PASS` — the password
-2. **Redeploy** the site (Deploys → Trigger deploy) so the function picks them up.
-
-Without those variables set, the site returns `503` instead of serving unprotected
-content — it fails closed.
-
-CLI alternative:
-
-```bash
-npx netlify env:set BASIC_AUTH_USER "youruser"
-npx netlify env:set BASIC_AUTH_PASS "yourpass"
-npx netlify deploy --build --prod
-```
-
-### Changing the password
-
-Update `BASIC_AUTH_PASS` and redeploy. Browsers cache Basic credentials per session;
-to force a re-prompt, close the tab or use a private window.
+To re-enable the shared gate: move the file back into `netlify/edge-functions/`, set
+`BASIC_AUTH_USER` and `BASIC_AUTH_PASS` (Site configuration → Environment variables), and
+redeploy.
 
 ## Accounts (Supabase Auth)
 
@@ -105,8 +95,6 @@ site keeps working before the keys are set.
 - Supabase's **Confirm email** setting, if enabled, requires a click-through before the
   first sign-in. Disable it (Authentication → Providers → Email) for a frictionless,
   kid-focused flow.
-- Basic Auth (above) can stay as an outer gate or be removed once per-user login is trusted;
-  the two are independent.
 - Learner data is namespaced per student in localStorage, so two accounts on one browser
   never read each other's data.
 

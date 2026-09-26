@@ -1,6 +1,8 @@
-// Local smoke test for netlify/edge-functions/basic-auth.ts logic.
+// Local smoke test for netlify/edge-functions.disabled/basic-auth.ts logic.
 // Run: node --experimental-strip-types scripts/test-basic-auth.mts
-import handler from '../netlify/edge-functions/basic-auth.ts'
+// NOTE: the edge function is disabled (see netlify/edge-functions.disabled/); this
+// test only exercises the handler code so it stays valid if we re-enable it.
+import handler from '../netlify/edge-functions.disabled/basic-auth.ts'
 
 type Env = Record<string, string | undefined>
 

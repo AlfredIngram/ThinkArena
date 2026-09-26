@@ -1,15 +1,16 @@
 # ThinkArena — Netlify configuration
 #
-# Site-wide auth is enforced by the Edge Function in
-# `netlify/edge-functions/basic-auth.ts` (HTTP Basic Auth).
+# Auth is handled by Supabase Auth (per-user accounts) inside the app.
+# The old site-wide HTTP Basic Auth gate has been DISABLED: its edge function
+# now lives in `netlify/edge-functions.disabled/` (outside the auto-deployed
+# `netlify/edge-functions/` directory), so Netlify no longer runs it and users
+# are no longer prompted by the browser.
 #
-# Set these environment variables in Netlify (Site configuration → Environment
-# variables), then redeploy:
+# To re-enable it: move `basic-auth.ts` back into `netlify/edge-functions/`,
+# set the env vars below, and redeploy.
 #
 #   BASIC_AUTH_USER   username for the login prompt
 #   BASIC_AUTH_PASS   password for the login prompt
-#
-# Without them the site returns 503 rather than serving unprotected content.
 #
 # Supabase (per-user accounts) — set these to enable the login screen:
 #
